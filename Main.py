@@ -5,6 +5,28 @@ from transformers import pipeline
 # Summarizer pipeline
 summarizer = pipeline('summarization', model="sshleifer/distilbart-cnn-12-6")
 
+def get_weather(lat, long):
+    # API to get weather data
+    url = "https://api.open-meteo.com/v1/forecast"
+    params = {
+        "latitude": lat,
+        "longitude": long,
+        "current": ["temperature_2m", "precipitation", "wind_speed_10m"],
+	    "hourly": ["precipitation_probability", "cloud_cover"]
+    }
+    responses = requests.get(url, params=params)
+    data = responses.json()
+
+    # Get weather values
+    weather = {}
+    weather["temperature_2m(F)"] = celcius_to_fahrenheit(data["current"]["temperature_2m"])
+    weather["precipitation(mm)"] = data["current"]["precipitation"]
+    weather["wind_speed(mph)"] = round(kilometers_to_miles(data["current"]["wind_speed_10m"]), 1)
+    weather["precipitation_probability(%)"] = data["hourly"]["precipitation_probability"][-1]
+    weather["cloud_cover(%)"] = data["hourly"]["cloud_cover"][-1]
+
+    return weather
+
 def get_news():
     # Website to scrape
     url = "https://idahonews.com/"
@@ -41,11 +63,23 @@ def get_news():
 
     return data
 
+def celcius_to_fahrenheit(celcius):
+    return (celcius * 9/5) + 32
+
+def kilometers_to_miles(kilometers):
+    return kilometers * 0.621371
+
 def print_news(data):
     for key, value in data.items():
         print("Title: " + key)
         print("Summary:" + value + "\n")
 
+def print_weather(weather):
+    for key, value in weather.items():
+        print(key + ": " + str(value))
 
-data = get_news()
-print_news(data)
+# data = get_news()
+# print_news(data)
+
+weather = get_weather(43.618881, -116.215019)
+print_weather(weather)
