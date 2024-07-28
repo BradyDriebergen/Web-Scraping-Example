@@ -1,6 +1,7 @@
 from bs4 import BeautifulSoup
 import requests
 from transformers import pipeline
+import tkinter as tk
 
 # Summarizer pipeline
 summarizer = pipeline('summarization', model="sshleifer/distilbart-cnn-12-6")
@@ -21,7 +22,7 @@ def get_weather(lat, long):
     weather = {}
     weather["temperature_2m(F)"] = celcius_to_fahrenheit(data["current"]["temperature_2m"])
     weather["precipitation(mm)"] = data["current"]["precipitation"]
-    weather["wind_speed(mph)"] = round(kilometers_to_miles(data["current"]["wind_speed_10m"]), 1)
+    weather["wind_speed(mph)"] = kilometers_to_miles(data["current"]["wind_speed_10m"])
     weather["precipitation_probability(%)"] = data["hourly"]["precipitation_probability"][-1]
     weather["cloud_cover(%)"] = data["hourly"]["cloud_cover"][-1]
 
@@ -64,10 +65,10 @@ def get_news():
     return data
 
 def celcius_to_fahrenheit(celcius):
-    return (celcius * 9/5) + 32
+    return round((celcius * 9/5) + 32, 1)
 
 def kilometers_to_miles(kilometers):
-    return kilometers * 0.621371
+    return round(kilometers * 0.621371, 1)
 
 def print_news(data):
     for key, value in data.items():
@@ -78,8 +79,28 @@ def print_weather(weather):
     for key, value in weather.items():
         print(key + ": " + str(value))
 
-# data = get_news()
-# print_news(data)
+def create_window():
+    window = tk.Tk()
+    window.title("Web Scraping Project")
+    window.geometry("800x600")
 
-weather = get_weather(43.618881, -116.215019)
-print_weather(weather)
+    news = get_news()
+    weather = get_weather(43.618881, -116.215019)
+
+    news_frame = tk.Frame(window)
+    news_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+
+    weather_frame = tk.Frame(window)
+    weather_frame.pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)
+
+    for key, value in news.items():
+        news_label = tk.Label(news_frame, text="Title: " + key + "\nSummary: " + value, wraplength=800)
+        news_label.pack()
+
+    for key, value in weather.items():
+        weather_label = tk.Label(weather_frame, text=key + ": " + str(value))
+        weather_label.pack()
+
+    window.mainloop()
+
+create_window()
